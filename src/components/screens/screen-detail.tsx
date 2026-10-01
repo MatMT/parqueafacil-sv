@@ -45,7 +45,7 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Fallback seguro para garantizar que siempre exista un objeto de parqueo válido
-  const currentParking = parking || selectedParking || MOCK_PARKINGS[0];
+  const currentParking = selectedParking || parking || MOCK_PARKINGS[0];
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -57,35 +57,10 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
       ? currentParking.images[0]
       : 'https://images.unsplash.com/photo-1590674899484-d5640e854abe?w=700&auto=format&fit=crop&q=80';
 
-  const reviewsToDisplay =
-    currentParking.reviews && currentParking.reviews.length >= 2
-      ? currentParking.reviews.slice(0, 2)
-      : [
-          {
-            id: 'rev-default-1',
-            authorName: 'Mario Henríquez',
-            date: 'Hace 2 días',
-            rating: 5,
-            comment:
-              'Excelente cochera en Santa Tecla, don Carlos me abrió al instante. Muy seguro y me ahorré más de $5 frente al centro comercial.',
-            carModel: 'Toyota Corolla',
-          },
-          {
-            id: 'rev-default-2',
-            authorName: 'Andrea Solís',
-            date: 'Hace 1 semana',
-            rating: 5,
-            comment:
-              'Espacio amplio para camioneta, portón eléctrico y caseta de vigilancia a la entrada. Tranquilidad absoluta.',
-            carModel: 'Toyota RAV4',
-          },
-        ];
-
   return (
     <div
-      className={`flex flex-col min-h-full relative transition-colors duration-200 ${
-        isDarkMode ? 'bg-slate-900 text-white' : 'bg-background text-slate-900'
-      }`}
+      className={`flex flex-col min-h-full relative transition-colors duration-200 ${isDarkMode ? 'bg-slate-900 text-white' : 'bg-background text-slate-900'
+        }`}
     >
       {/* Toast Notificación */}
       {toastMessage && (
@@ -97,11 +72,10 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
 
       {/* Header flotante con botón Volver y acciones */}
       <header
-        className={`sticky top-0 z-30 px-4 py-2.5 backdrop-blur-md border-b flex items-center justify-between transition-colors ${
-          isDarkMode
+        className={`sticky top-0 z-30 px-4 py-2.5 backdrop-blur-md border-b flex items-center justify-between transition-colors ${isDarkMode
             ? 'bg-slate-900/90 border-slate-800'
             : 'bg-white/90 border-slate-100'
-        }`}
+          }`}
       >
         <button
           onClick={onBack}
@@ -117,11 +91,10 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
             type="button"
             title="Compartir cochera"
             onClick={() => showToast('Enlace de la cochera copiado al portapapeles')}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-95 cursor-pointer ${
-              isDarkMode
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-95 cursor-pointer ${isDarkMode
                 ? 'text-slate-300 hover:text-white hover:bg-slate-800'
                 : 'text-slate-600 hover:text-primary hover:bg-slate-100'
-            }`}
+              }`}
           >
             <Share2 className="w-4 h-4" />
           </button>
@@ -132,9 +105,8 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
               setIsLiked(!isLiked);
               showToast(!isLiked ? 'Guardado en Cocheras Favoritas' : 'Eliminado de Favoritos');
             }}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-95 cursor-pointer ${
-              isLiked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
-            }`}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors active:scale-95 cursor-pointer ${isLiked ? 'text-rose-500' : 'text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+              }`}
           >
             <Heart className={`w-4 h-4 ${isLiked ? 'fill-rose-500' : ''}`} />
           </button>
@@ -205,11 +177,10 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
 
         {/* 2. JERARQUÍA DEL ANFITRIÓN (CARLOS MÉNDEZ / AIRBNB & UBER STYLE) */}
         <div
-          className={`p-3.5 rounded-2xl border shadow-xs flex items-center justify-between transition-colors ${
-            isDarkMode
+          className={`p-3.5 rounded-2xl border shadow-xs flex items-center justify-between transition-colors ${isDarkMode
               ? 'bg-slate-800/90 border-slate-700'
               : 'bg-white border-slate-200/90'
-          }`}
+            }`}
         >
           <div className="flex items-center gap-3 min-w-0">
             {/* Avatar visible (w-12 h-12 rounded-full border border-slate-200) */}
@@ -251,9 +222,8 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
 
         {/* 3. CHIPS COMPACTOS PARA VEHÍCULOS PERMITIDOS (ESTILO LIMPIO AIRBNB/UBER) */}
         <div
-          className={`p-3.5 rounded-2xl border transition-colors ${
-            isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
-          }`}
+          className={`p-3.5 rounded-2xl border transition-colors ${isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
+            }`}
         >
           <h3 className="text-xs font-bold mb-2 flex items-center gap-1.5 text-primary dark:text-white">
             <Car className="w-3.5 h-3.5 text-secondary shrink-0" />
@@ -278,9 +248,8 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
 
         {/* 3. CHIPS COMPACTOS PARA CARACTERÍSTICAS DESTACADAS (ESTILO LIMPIO AIRBNB/UBER) */}
         <div
-          className={`p-3.5 rounded-2xl border transition-colors ${
-            isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
-          }`}
+          className={`p-3.5 rounded-2xl border transition-colors ${isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
+            }`}
         >
           <h3 className="text-xs font-bold mb-2.5 flex items-center gap-1.5 text-primary dark:text-white">
             <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
@@ -326,82 +295,98 @@ export const ScreenDetail: React.FC<ScreenDetailProps> = ({
           </div>
         </div>
 
-        {/* 4. RESEÑAS DE LA COMUNIDAD (2 RESEÑAS VISIBLES) */}
+        {/* 4. RESEÑAS DE LA COMUNIDAD */}
         <div
-          className={`p-4 rounded-2xl border transition-colors ${
-            isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
-          }`}
+          className={`p-4 rounded-2xl border transition-colors ${isDarkMode ? 'bg-slate-800/90 border-slate-700' : 'bg-white border-slate-200'
+            }`}
         >
+          {/* 1. CABECERA DINÁMICA */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="text-xs font-black uppercase tracking-wider text-primary dark:text-white">
-                Reseñas de la Comunidad
+              <h3 className="text-xs font-bold text-[#001F5D] dark:text-white tracking-wide uppercase">
+                Reseñas de la comunidad
               </h3>
               <p className="text-[11px] text-[#59667B] dark:text-slate-400">
-                Conductores que estacionaron en {currentParking.zone}
+                Conductores que estacionaron en {currentParking?.zone || 'la zona'}
               </p>
             </div>
             <div className="text-right">
-              <span className="text-base font-black text-primary dark:text-[#ECD700]">
-                {currentParking.rating.toFixed(1)}
+              <span className="text-base font-bold text-[#001F5D] dark:text-[#ECD700]">
+                {currentParking?.rating?.toFixed(1) || '4.9'}
               </span>
-              <span className="text-xs text-[#59667B] dark:text-slate-400"> / 5.0</span>
+              <span className="text-xs text-slate-400"> / 5.0</span>
             </div>
           </div>
 
-          <div className="space-y-3 divide-y divide-slate-100 dark:divide-slate-700">
-            {reviewsToDisplay.map((rev, index) => {
-              const initials = rev.authorName
-                .split(' ')
-                .map((n) => n[0])
-                .join('')
-                .slice(0, 2);
-              return (
-                <div key={rev.id || index} className="pt-2.5 first:pt-0">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-primary/10 dark:bg-slate-700 text-[#001F5D] dark:text-[#7C9FE7] font-black text-[10px] flex items-center justify-center shrink-0 border border-primary/20">
-                        {initials}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-bold leading-tight">
-                            {rev.authorName}
-                          </span>
-                          {rev.carModel && (
-                            <span className="text-[9px] bg-slate-100 dark:bg-slate-700 text-[#59667B] dark:text-slate-300 px-1.5 py-0.2 rounded font-medium">
-                              {rev.carModel}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+          {/* 2. LISTA DINÁMICA DE TESTIMONIOS CON PLANTILLAS */}
+          <div>
+            {(currentParking?.reviews && currentParking.reviews.length > 0
+              ? currentParking.reviews
+              : [
+                {
+                  id: 'fb-1',
+                  authorName: 'Mario Henríquez',
+                  carModel: 'Toyota Corolla',
+                  date: 'Hace 2 días',
+                  rating: 5,
+                  comment: `Excelente espacio en ${currentParking?.zone || 'la zona'}. La atención de ${currentParking?.host?.name || 'el anfitrión'} fue inmediata y muy cordial. Súper seguro y accesible.`,
+                },
+                {
+                  id: 'fb-2',
+                  authorName: 'Andrea Solís',
+                  carModel: 'Toyota RAV4',
+                  date: 'Hace 1 semana',
+                  rating: 5,
+                  comment: `Espacio amplio y seguro en ${currentParking?.addressReference || currentParking?.zone}. Me ahorré tiempo y dinero frente a los parqueos comerciales tradicionales.`,
+                },
+              ]
+            ).map((rev) => (
+              <div key={rev.id} className="border-b border-slate-100 dark:border-slate-700/60 last:border-b-0 py-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-[#001F5D]/10 dark:bg-slate-700 text-[#001F5D] dark:text-[#7C9FE7] font-bold text-xs flex items-center justify-center">
+                      {rev.authorName
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)}
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium">
-                      {rev.date}
-                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-[#001F5D] dark:text-white mr-2">
+                        {rev.authorName}
+                      </span>
+                      {rev.carModel && (
+                        <span className="text-[10px] bg-slate-100 dark:bg-slate-700 text-[#59667B] dark:text-slate-300 px-1.5 py-0.5 rounded-md font-medium">
+                          {rev.carModel}
+                        </span>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="flex items-center gap-1 mb-1">
-                    <RatingStars rating={rev.rating} size="sm" showCount={false} />
-                  </div>
-
-                  <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-normal">
-                    “{rev.comment}”
-                  </p>
+                  <span className="text-[10px] text-slate-400">{rev.date}</span>
                 </div>
-              );
-            })}
+
+                <div className="flex items-center gap-1 mb-1 text-[#ECD700] text-xs">
+                  {'★'.repeat(rev.rating)}
+                  <span className="text-xs font-bold text-[#001F5D] dark:text-[#ECD700] ml-1">
+                    {rev.rating}.0
+                  </span>
+                </div>
+
+                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed italic">
+                  "{rev.comment}"
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* 5. BARRA FIJA INFERIOR ESTANDARIZADA */}
       <div
-        className={`sticky bottom-0 z-30 px-4 py-3 backdrop-blur-md border-t flex items-center justify-between gap-3 shadow-floating transition-colors ${
-          isDarkMode
+        className={`sticky bottom-0 z-30 px-4 py-3 backdrop-blur-md border-t flex items-center justify-between gap-3 shadow-floating transition-colors ${isDarkMode
             ? 'bg-slate-900/95 border-slate-800'
             : 'bg-white/95 border-slate-200'
-        }`}
+          }`}
       >
         <div>
           <span className="text-[10px] uppercase font-bold text-[#59667B] dark:text-slate-400 block mb-0.5">
