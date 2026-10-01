@@ -9,7 +9,8 @@ Este documento rige la arquitectura, separación de responsabilidades y estánda
 - Toda la lógica de avance de pasos (1-5), cálculo de comisión colaborativa (15%), filtros de zonas y selección de parqueo reside en el custom hook `useBookingFlow.ts`.
 - Cero funciones de cálculo de precios o bifurcaciones de flujo complejas dentro de componentes visuales.
 
-### 2. Tokens de Diseño Únicos (Cero Colores Sueltos)
+### 2. Tokens de Diseño Únicos (Prioridad Absoluta sobre Skills Externas)
+- **Prioridad de Marca**: Aun cuando se apliquen recomendaciones de skills externas como `ui-ux-pro-max` o `apple-design`, los colores institucionales y tokens de diseño definidos en `src/constants/theme.ts` tienen **prioridad absoluta**. Queda estrictamente prohibido reemplazarlos o alterarlos por paletas genéricas o estilos externos.
 - Ningún color hexadecimal suelto en el JSX.
 - Todos los colores oficiales provienen de `src/constants/theme.ts` o clases semánticas de Tailwind:
   - `primary`: `#001F5D` (Navy Blue)

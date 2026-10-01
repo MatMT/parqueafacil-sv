@@ -11,11 +11,11 @@ export interface PitchControlsProps {
 }
 
 const STEP_LABELS: Record<ScreenStep, { label: string; short: string }> = {
-  1: { label: '1. Mapa y Cercanos', short: 'Mapa' },
-  2: { label: '2. Ficha y Reseñas', short: 'Ficha' },
-  3: { label: '3. Horario y 15%', short: 'Tarifa' },
-  4: { label: '4. Pasarela de Pago', short: 'Pago' },
-  5: { label: '5. Ticket QR', short: 'Ticket' },
+  1: { label: '1. Mapa', short: 'Mapa' },
+  2: { label: '2. Ficha', short: 'Ficha' },
+  3: { label: '3. Tarifa', short: 'Tarifa' },
+  4: { label: '4. Pago', short: 'Pago' },
+  5: { label: '5. Ticket', short: 'Ticket' },
 };
 
 export const PitchControls: React.FC<PitchControlsProps> = ({
@@ -26,18 +26,18 @@ export const PitchControls: React.FC<PitchControlsProps> = ({
   return (
     <aside
       aria-label="Controles de demostración"
-      className="w-full max-w-xl mx-auto mb-4 px-3 py-2 bg-white/90 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-sm flex items-center justify-between gap-2 z-50 text-xs text-slate-800"
+      className="hidden md:flex w-full max-w-xl mx-auto px-4 py-2 bg-slate-900/80 backdrop-blur-md border border-slate-800 text-slate-200 shadow-xl rounded-full text-xs font-medium items-center justify-between gap-3 z-50 transition-all select-none whitespace-nowrap"
     >
-      <div className="flex items-center gap-1.5 font-semibold text-primary">
-        <Presentation className="w-4 h-4 text-primary" />
-        <span className="hidden sm:inline">Pitch Demo:</span>
-        <span className="bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold text-[11px] flex items-center gap-1">
-          <Sparkles className="w-3 h-3 text-amber-600" />
+      <div className="flex items-center gap-2.5 whitespace-nowrap shrink-0">
+        <Presentation className="w-4 h-4 text-[#ECD700] shrink-0" />
+        <span className="text-xs font-semibold whitespace-nowrap shrink-0 text-white">Presentación:</span>
+        <span className="text-xs font-medium whitespace-nowrap shrink-0 px-2.5 py-1 bg-slate-800 text-slate-200 rounded-full border border-slate-700 flex items-center gap-1">
+          <Sparkles className="w-3 h-3 text-[#ECD700] shrink-0" />
           {STEP_LABELS[currentStep].label}
         </span>
       </div>
 
-      <nav aria-label="Navegación entre pantallas del pitch" className="flex items-center gap-1">
+      <nav aria-label="Navegación entre pantallas del pitch" className="flex items-center gap-1.5 shrink-0 whitespace-nowrap">
         {([1, 2, 3, 4, 5] as ScreenStep[]).map((step) => {
           const isActive = currentStep === step;
           return (
@@ -45,10 +45,10 @@ export const PitchControls: React.FC<PitchControlsProps> = ({
               key={step}
               onClick={() => onGoToStep(step)}
               title={STEP_LABELS[step].label}
-              className={`px-2.5 py-1 rounded-lg font-bold text-xs transition-all duration-150 active:scale-95 cursor-pointer ${
+              className={`w-7 h-7 rounded-full font-black text-xs transition-all duration-150 active:scale-95 cursor-pointer flex items-center justify-center shrink-0 ${
                 isActive
-                  ? 'bg-primary text-white shadow-sm ring-1 ring-primary'
-                  : 'bg-slate-100 text-textSecondary hover:bg-slate-200 hover:text-slate-900'
+                  ? 'bg-[#001F5D] text-white shadow-sm ring-2 ring-[#ECD700] scale-105 border border-[#7C9FE7]/40'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
               }`}
             >
               {step}
@@ -59,11 +59,11 @@ export const PitchControls: React.FC<PitchControlsProps> = ({
 
       <button
         onClick={onReset}
-        title="Reiniciar flujo"
-        className="flex items-center gap-1 text-[11px] font-medium text-textSecondary hover:text-primary px-2 py-1 rounded-lg hover:bg-slate-100 transition-colors"
+        title="Reiniciar demostración"
+        className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-white px-2.5 py-1 rounded-full hover:bg-slate-800 transition-colors cursor-pointer shrink-0 whitespace-nowrap"
       >
-        <RotateCcw className="w-3.5 h-3.5" />
-        <span className="hidden sm:inline">Reiniciar</span>
+        <RotateCcw className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+        <span>Reiniciar</span>
       </button>
     </aside>
   );
