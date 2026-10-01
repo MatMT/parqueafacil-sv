@@ -64,22 +64,21 @@ export const ScreenHome: React.FC<ScreenHomeProps> = ({
 
   const carouselRef = useRef<HTMLDivElement | null>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const isProgrammaticScroll = useRef(false);
+  const isModeSwitchingRef = useRef(false);
+  const isClickScrolling = useRef(false);
   const isManualScrolling = useRef(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Conmutador de vista blindado contra saltos erráticos de scroll y mapa
   const handleToggleViewMode = () => {
-    const nextMode = viewMode === 'carousel' ? 'list' : 'carousel';
-    if (nextMode === 'carousel') {
-      isProgrammaticScroll.current = true;
-    }
-    setViewMode(nextMode);
+    isModeSwitchingRef.current = true;
+    setViewMode((prev) => (prev === 'carousel' ? 'list' : 'carousel'));
   };
 
   // 1. Sincronización automática geométrica al deslizar (Scroll Detector infalible)
   const handleCarouselScroll = () => {
-    if (isProgrammaticScroll.current || !carouselRef.current) return;
+    // Si estamos cambiando de vista o el scroll es programático, abortar de inmediato
+    if (isModeSwitchingRef.current || isClickScrolling.current || !carouselRef.current) return;
 
     isManualScrolling.current = true;
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -112,7 +111,7 @@ export const ScreenHome: React.FC<ScreenHomeProps> = ({
 
   // 2. Control de navegación al hacer clic en un pin del mapa o tarjeta
   const handlePinOrCardClick = (parking: ParkingSpace) => {
-    isProgrammaticScroll.current = true;
+    isClickScrolling.current = true;
     onSelectParking(parking);
     if (viewMode === 'carousel') {
       cardRefs.current[parking.id]?.scrollIntoView({
@@ -122,29 +121,37 @@ export const ScreenHome: React.FC<ScreenHomeProps> = ({
       });
     }
     setTimeout(() => {
-      isProgrammaticScroll.current = false;
+      isClickScrolling.current = false;
     }, 450);
   };
 
-  // 3. Al cambiar de 'list' a 'carousel', centrar INMEDIATAMENTE la tarjeta activa sin mover el mapa
+  // 3. Cálculo síncrono del scrollLeft exacto al montar el carrusel (useLayoutEffect)
   useLayoutEffect(() => {
-    if (viewMode === 'carousel' && selectedParking?.id) {
-      isProgrammaticScroll.current = true;
-      cardRefs.current[selectedParking.id]?.scrollIntoView({
-        behavior: 'instant' as ScrollBehavior,
-        inline: 'center',
-        block: 'nearest',
-      });
+    if (viewMode === 'carousel' && selectedParking?.id && carouselRef.current) {
+      isModeSwitchingRef.current = true;
+      const container = carouselRef.current;
+      const targetCard = cardRefs.current[selectedParking.id];
+
+      if (targetCard) {
+        // Posicionar exactamente la tarjeta activa en el centro del contenedor
+        const targetScrollLeft =
+          targetCard.offsetLeft - (container.clientWidth - targetCard.offsetWidth) / 2;
+
+        container.scrollLeft = Math.max(0, targetScrollLeft);
+      }
+
+      // Descongelar el listener una vez establecido el layout
       const timer = setTimeout(() => {
-        isProgrammaticScroll.current = false;
-      }, 150);
+        isModeSwitchingRef.current = false;
+      }, 100);
+
       return () => clearTimeout(timer);
     }
-  }, [viewMode, selectedParking?.id]);
+  }, [viewMode]);
 
-  // 4. Auto-centrado suave si el cambio vino de un control externo
+  // 4. Auto-centrado suave si el cambio vino de un control externo o inicio
   useEffect(() => {
-    if (isManualScrolling.current || isProgrammaticScroll.current || viewMode !== 'carousel') return;
+    if (isManualScrolling.current || isModeSwitchingRef.current || isClickScrolling.current || viewMode !== 'carousel') return;
 
     if (selectedParking?.id && cardRefs.current[selectedParking.id]) {
       cardRefs.current[selectedParking.id]?.scrollIntoView({
@@ -503,7 +510,7 @@ export const ScreenHome: React.FC<ScreenHomeProps> = ({
             <div
               ref={carouselRef}
               onScroll={handleCarouselScroll}
-              className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 scroll-px-4 scroll-smooth no-scrollbar pb-3 pt-1"
+              className="flex gap-3 overflow-x-auto snap-x snap-mandatory px-4 scroll-px-4 no-scrollbar animate-in fade-in duration-150 pb-2"
             >
               {filteredParkings.map((parking) => {
                 const isSelected = selectedParking.id === parking.id;
@@ -515,7 +522,7 @@ export const ScreenHome: React.FC<ScreenHomeProps> = ({
                     }}
                     data-parking-id={parking.id}
                     onClick={() => handlePinOrCardClick(parking)}
-                    className={`snap-center shrink-0 w-[82%] max-w-[310px] rounded-2xl bg-[#001F5D] border transition-all duration-300 cursor-pointer overflow-hidden shadow-lg flex flex-col justify-between ${
+                    className={`shrink-0 w-[82%] min-w-[270px] max-w-[310px] snap-center select-none rounded-2xl bg-[#001F5D] border transition-[transform,opacity,border-color] duration-150 cursor-pointer overflow-hidden shadow-lg flex flex-col justify-between ${
                       isSelected
                         ? 'border-[#ECD700] ring-2 ring-[#ECD700] scale-[1.01] shadow-2xl opacity-100'
                         : 'border-blue-900/60 hover:border-[#7C9FE7]/40 opacity-95'
