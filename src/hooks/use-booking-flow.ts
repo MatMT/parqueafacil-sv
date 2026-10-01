@@ -7,15 +7,30 @@ import {
   PaymentMethodType,
   ParkingSpace,
   BookingDetails,
+  SidebarView,
+  UserProfile,
 } from '../types';
 import { MOCK_PARKINGS } from '../data/mock-parkings';
 import { APP_CONFIG } from '../constants/theme';
+
+const DEFAULT_USER: UserProfile = {
+  name: 'Mario Henríquez',
+  email: 'mario.henriquez@gmail.com',
+  phone: '+503 7842-9910',
+  avatar:
+    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&h=200&q=80',
+  carModel: 'Toyota Corolla 2022 (Sedán)',
+  licensePlate: 'P 849-231',
+  rating: 4.95,
+  tripsCount: 14,
+  walletBalance: 12.5,
+};
 
 export function useBookingFlow() {
   const [currentStep, setCurrentStep] = useState<ScreenStep>(1);
   const [selectedZone, setSelectedZone] = useState<ZoneType>('Todas');
   const [selectedParkingId, setSelectedParkingId] = useState<string>(
-    MOCK_PARKINGS[0].id
+    'espacio-hipodromo-san-benito'
   );
   const [bookingDuration, setBookingDuration] = useState<number>(
     APP_CONFIG.defaultHours
@@ -25,16 +40,50 @@ export function useBookingFlow() {
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
   const [bookingCode, setBookingCode] = useState<string>('PFSV-8942');
 
-  // Cochera activa seleccionada
+  // Sidebar & Dark Mode State
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [sidebarView, setSidebarView] = useState<SidebarView>('menu');
+  const [userProfile] = useState<UserProfile>(DEFAULT_USER);
+
+  const openSidebar = useCallback((view: SidebarView = 'menu') => {
+    setSidebarView(view);
+    setIsSidebarOpen(true);
+  }, []);
+
+  const closeSidebar = useCallback(() => {
+    setIsSidebarOpen(false);
+  }, []);
+
+  const toggleSidebar = useCallback(() => {
+    setIsSidebarOpen((prev) => !prev);
+  }, []);
+
+  const toggleDarkMode = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
+
+  // Cochera activa seleccionada (por defecto Espacio Hipódromo San Benito)
   const selectedParking = useMemo(() => {
     return (
-      MOCK_PARKINGS.find((p) => p.id === selectedParkingId) || MOCK_PARKINGS[0]
+      MOCK_PARKINGS.find((p) => p.id === selectedParkingId) ||
+      MOCK_PARKINGS.find((p) => p.id === 'espacio-hipodromo-san-benito') ||
+      MOCK_PARKINGS[0]
     );
   }, [selectedParkingId]);
 
-  // Lista de cocheras filtrada por zona
+  // Lista de cocheras filtrada por zona con 'espacio-hipodromo-san-benito' como primera en "Cerca de mí"
   const filteredParkings = useMemo(() => {
     if (selectedZone === 'Todas') {
+      const defaultFirst = MOCK_PARKINGS.find(
+        (p) => p.id === 'espacio-hipodromo-san-benito'
+      );
+      if (defaultFirst) {
+        return [
+          defaultFirst,
+          ...MOCK_PARKINGS.filter((p) => p.id !== 'espacio-hipodromo-san-benito'),
+        ];
+      }
       return MOCK_PARKINGS;
     }
     return MOCK_PARKINGS.filter((p) => p.zone === selectedZone);
@@ -97,6 +146,18 @@ export function useBookingFlow() {
     });
   }, []);
 
+  const changeSelectedZone = useCallback((zone: ZoneType) => {
+    setSelectedZone(zone);
+    if (zone === 'Todas') {
+      setSelectedParkingId('espacio-hipodromo-san-benito');
+    } else {
+      const available = MOCK_PARKINGS.filter((p) => p.zone === zone);
+      if (available.length > 0) {
+        setSelectedParkingId(available[0].id);
+      }
+    }
+  }, []);
+
   const goToStep = useCallback((step: ScreenStep) => {
     setCurrentStep(step);
   }, []);
@@ -104,7 +165,7 @@ export function useBookingFlow() {
   const resetFlow = useCallback(() => {
     setCurrentStep(1);
     setSelectedZone('Todas');
-    setSelectedParkingId(MOCK_PARKINGS[0].id);
+    setSelectedParkingId('espacio-hipodromo-san-benito');
     setBookingDuration(APP_CONFIG.defaultHours);
     setPaymentMethod('card');
     setIsProcessingPayment(false);
@@ -167,7 +228,7 @@ export function useBookingFlow() {
   return {
     currentStep,
     selectedZone,
-    setSelectedZone,
+    setSelectedZone: changeSelectedZone,
     selectedParking,
     selectedParkingId,
     filteredParkings,
@@ -189,5 +250,15 @@ export function useBookingFlow() {
     selectParking,
     selectParkingById,
     processPayment,
+    isSidebarOpen,
+    openSidebar,
+    closeSidebar,
+    toggleSidebar,
+    isDarkMode,
+    setIsDarkMode,
+    toggleDarkMode,
+    sidebarView,
+    setSidebarView,
+    userProfile,
   };
 }

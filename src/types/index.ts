@@ -10,6 +10,20 @@ export type ZoneType =
 
 export type PaymentMethodType = 'card' | 'chivo' | 'transfer';
 
+export type SidebarView = 'menu' | 'profile' | 'settings';
+
+export interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string;
+  carModel: string;
+  licensePlate: string;
+  rating: number;
+  tripsCount: number;
+  walletBalance: number;
+}
+
 export interface HostInfo {
   name: string;
   avatar: string;
@@ -53,7 +67,7 @@ export interface ParkingSpace {
     mapX: number; // Coordenada X relativa % para el mapa interactivo
     mapY: number; // Coordenada Y relativa % para el mapa interactivo
   };
-  vehicleTypes: ('Sedán' | 'Camioneta' | 'Moto')[];
+  vehicleTypes: ('Sedán' | 'Camioneta' | 'Pick-up' | 'Moto')[];
   images: string[];
   reviews: Review[];
   highlightBadge?: string;
