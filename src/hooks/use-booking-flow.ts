@@ -26,6 +26,38 @@ const DEFAULT_USER: UserProfile = {
   walletBalance: 12.5,
 };
 
+// Función para redondear a la siguiente hora entera
+export const getNextWholeHour = () => {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  return d.getHours(); // Ej: si son 10:15 -> retorna 11
+};
+
+// Formateador 12h: 11 -> "11:00 AM", 14 -> "2:00 PM"
+export const formatHour12 = (hour24: number) => {
+  const normalizedHour = ((hour24 % 24) + 24) % 24;
+  const period = normalizedHour >= 12 ? 'PM' : 'AM';
+  const hour12 = normalizedHour % 12 === 0 ? 12 : normalizedHour % 12;
+  return `${hour12}:00 ${period}`;
+};
+
+// Días dinámicos ("Hoy", "Mañana", tercer día según calendario)
+export const getUpcomingDays = () => {
+  const now = new Date();
+  const thirdDate = new Date(now);
+  thirdDate.setDate(now.getDate() + 2);
+
+  const dayName = new Intl.DateTimeFormat('es-SV', { weekday: 'long' }).format(thirdDate);
+  const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+  return [
+    { id: 'today' as const, label: 'Hoy' },
+    { id: 'tomorrow' as const, label: 'Mañana' },
+    { id: 'day3' as const, label: capitalizedDay },
+  ];
+};
+
 export function useBookingFlow() {
   const [currentStep, setCurrentStep] = useState<ScreenStep>(1);
   const [selectedZone, setSelectedZone] = useState<ZoneType>('Todas');
@@ -35,6 +67,8 @@ export function useBookingFlow() {
   const [bookingDuration, setBookingDuration] = useState<number>(
     APP_CONFIG.defaultHours
   );
+  const [selectedDayId, setSelectedDayId] = useState<'today' | 'tomorrow' | 'day3'>('today');
+  const [customScheduleText, setCustomScheduleText] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethodType>('card');
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
@@ -89,22 +123,34 @@ export function useBookingFlow() {
     return MOCK_PARKINGS.filter((p) => p.zone === selectedZone);
   }, [selectedZone]);
 
-  // Horario estimado (ej: de 2:00 PM a 4:00 PM)
+  // Si es "Hoy", inicia en la próxima hora; si es otro día, inicia por defecto a las 9:00 AM
+  const startHour = useMemo(() => {
+    return selectedDayId === 'today' ? getNextWholeHour() : 9;
+  }, [selectedDayId]);
+
+  const endHour = startHour + bookingDuration;
+  const formattedTimeRange = `${formatHour12(startHour)} a ${formatHour12(endHour)}`;
+
+  const activeDayLabel = useMemo(() => {
+    const days = getUpcomingDays();
+    return days.find((d) => d.id === selectedDayId)?.label || 'Hoy';
+  }, [selectedDayId]);
+
+  const computedScheduleText = `${activeDayLabel} · ${formattedTimeRange} (${bookingDuration} ${bookingDuration === 1 ? 'Hora' : 'Horas'})`;
+  const scheduleText = customScheduleText || computedScheduleText;
+
+  // Horario dinámico calculado en tiempo real
   const timeRange = useMemo(() => {
-    const startHour = 14; // 2:00 PM
-    const endHour = startHour + bookingDuration;
-    const formatHour = (h: number) => {
-      const period = h >= 12 ? 'PM' : 'AM';
-      const adjusted = h > 12 ? h - 12 : h;
-      return `${adjusted}:00 ${period}`;
-    };
     return {
-      date: 'Hoy',
-      startTime: formatHour(startHour),
-      endTime: formatHour(endHour),
-      formattedRange: `${formatHour(startHour)} a ${formatHour(endHour)}`,
+      date: activeDayLabel,
+      startHour,
+      endHour,
+      startTime: formatHour12(startHour),
+      endTime: formatHour12(endHour),
+      formattedRange: formattedTimeRange,
+      scheduleText,
     };
-  }, [bookingDuration]);
+  }, [activeDayLabel, startHour, endHour, formattedTimeRange, scheduleText]);
 
   // Cálculos financieros
   const financials = useMemo(() => {
@@ -166,10 +212,31 @@ export function useBookingFlow() {
     setCurrentStep(1);
     setSelectedZone('Todas');
     setSelectedParkingId('espacio-hipodromo-san-benito');
+    setSelectedDayId('today');
+    setCustomScheduleText(null);
     setBookingDuration(APP_CONFIG.defaultHours);
     setPaymentMethod('card');
     setIsProcessingPayment(false);
   }, []);
+
+  const updateBookingSchedule = useCallback(
+    (details: {
+      hours?: number;
+      scheduleText?: string;
+      dayId?: 'today' | 'tomorrow' | 'day3';
+    }) => {
+      if (details.hours !== undefined) {
+        setBookingDuration(details.hours);
+      }
+      if (details.dayId) {
+        setSelectedDayId(details.dayId);
+      }
+      if (details.scheduleText) {
+        setCustomScheduleText(details.scheduleText);
+      }
+    },
+    []
+  );
 
   const selectParking = useCallback((parking: ParkingSpace) => {
     setSelectedParkingId(parking.id);
@@ -215,6 +282,7 @@ export function useBookingFlow() {
       bookingCode,
       qrCodeToken: `https://parqueafacil.sv/verify/${bookingCode}`,
       createdAt: new Date().toISOString(),
+      scheduleText: timeRange.scheduleText,
     };
   }, [
     selectedParking.id,
@@ -235,6 +303,11 @@ export function useBookingFlow() {
     allParkings: MOCK_PARKINGS,
     bookingDuration,
     setBookingDuration,
+    selectedDayId,
+    setSelectedDayId,
+    activeDayLabel,
+    scheduleText,
+    updateBookingSchedule,
     incrementDuration,
     decrementDuration,
     timeRange,

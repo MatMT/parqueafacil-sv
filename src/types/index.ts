@@ -88,4 +88,5 @@ export interface BookingDetails {
   bookingCode: string;
   qrCodeToken: string;
   createdAt: string;
+  scheduleText?: string;
 }

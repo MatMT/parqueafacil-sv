@@ -80,7 +80,7 @@ export const ScreenTicket: React.FC<ScreenTicketProps> = ({
     'PARQUEAFÁCIL SV | TICKET OFICIAL',
     `Código: #${booking.bookingCode || 'PFSV-8942'}`,
     `Lugar: ${parking.title || 'Espacio Hipódromo San Benito'} (${parking.zone || 'Zona Rosa'})`,
-    `Horario: Hoy · ${booking.startTime || '2:00 PM'} - ${booking.endTime || '4:00 PM'} (${booking.hours || 2} hrs)`,
+    `Horario: ${booking.scheduleText || `${booking.date || 'Hoy'} · ${booking.startTime || '11:00 AM'} - ${booking.endTime || '1:00 PM'} (${booking.hours || 2} hrs)`}`,
     `Total: $${booking.totalAmount ? booking.totalAmount.toFixed(2) : '3.45'} (Pagado)`,
     'ESTADO: ACCESO AUTORIZADO ✅',
   ].join('\n');
@@ -176,7 +176,7 @@ export const ScreenTicket: React.FC<ScreenTicketProps> = ({
                 Escanea desde cualquier distancia con la cámara
               </p>
               <p className="text-[11px] text-slate-400">
-                Válido para entrada: <span className="text-white font-bold">{booking.startTime} - {booking.endTime}</span>
+                Válido para entrada: <span className="text-white font-bold">{booking.date ? `${booking.date} · ` : ''}{booking.startTime} - {booking.endTime}</span>
               </p>
             </div>
 
@@ -297,9 +297,9 @@ export const ScreenTicket: React.FC<ScreenTicketProps> = ({
                 <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">
                   Horario
                 </span>
-                <p className="text-[11px] font-bold flex items-center gap-1">
+                <p className="text-[11px] font-bold flex items-center gap-1" title={booking.scheduleText}>
                   <Clock className="w-3 h-3 text-secondary shrink-0" />
-                  <span>{booking.startTime} - {booking.endTime}</span>
+                  <span className="truncate">{booking.date ? `${booking.date} · ` : ''}{booking.startTime} - {booking.endTime}</span>
                 </p>
               </div>
 

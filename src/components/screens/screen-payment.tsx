@@ -116,7 +116,7 @@ export const ScreenPayment: React.FC<ScreenPaymentProps> = ({
           <div className="pt-2.5 border-t border-white/15 flex items-center gap-1.5 text-xs text-slate-200">
             <Clock className="w-3.5 h-3.5 text-[#7C9FE7] shrink-0" />
             <span>
-              Hoy · {timeRange.formattedRange} ({hours} {hours === 1 ? 'hora' : 'horas'})
+              {timeRange.date || 'Hoy'} · {timeRange.formattedRange} ({hours} {hours === 1 ? 'hora' : 'horas'})
             </span>
           </div>
         </div>

@@ -21,6 +21,9 @@ export default function HomePage() {
     bookingDuration,
     incrementDuration,
     decrementDuration,
+    selectedDayId,
+    setSelectedDayId,
+    updateBookingSchedule,
     timeRange,
     financials,
     paymentMethod,
@@ -106,10 +109,14 @@ export default function HomePage() {
               hours={bookingDuration}
               onIncrementHours={incrementDuration}
               onDecrementHours={decrementDuration}
+              selectedDayId={selectedDayId}
+              onSelectDayId={setSelectedDayId}
+              onUpdateBooking={updateBookingSchedule}
               timeRange={timeRange}
               financials={financials}
               onBack={() => goToStep(2)}
               onProceedToPayment={() => goToStep(4)}
+              isDarkMode={isDarkMode}
             />
           )}
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { ParkingSpace } from '../../types';
 import { Badge } from '../ui/badge';
@@ -16,24 +16,65 @@ import {
   ChevronRight,
 } from 'lucide-react';
 
+// Función para redondear a la siguiente hora entera
+const getNextWholeHour = () => {
+  const d = new Date();
+  d.setMinutes(0, 0, 0);
+  d.setHours(d.getHours() + 1);
+  return d.getHours(); // Ej: si son 10:15 -> retorna 11
+};
+
+// Formateador 12h: 11 -> "11:00 AM", 14 -> "2:00 PM"
+const formatHour12 = (hour24: number) => {
+  const normalizedHour = ((hour24 % 24) + 24) % 24;
+  const period = normalizedHour >= 12 ? 'PM' : 'AM';
+  const hour12 = normalizedHour % 12 === 0 ? 12 : normalizedHour % 12;
+  return `${hour12}:00 ${period}`;
+};
+
+// Días dinámicos ("Hoy", "Mañana", tercer día según calendario)
+const getUpcomingDays = () => {
+  const now = new Date();
+  const thirdDate = new Date(now);
+  thirdDate.setDate(now.getDate() + 2);
+
+  const dayName = new Intl.DateTimeFormat('es-SV', { weekday: 'long' }).format(thirdDate);
+  // Capitalizar primera letra (ej. "Viernes", "Sábado")
+  const capitalizedDay = dayName.charAt(0).toUpperCase() + dayName.slice(1);
+
+  return [
+    { id: 'today', label: 'Hoy' },
+    { id: 'tomorrow', label: 'Mañana' },
+    { id: 'day3', label: capitalizedDay },
+  ];
+};
+
 export interface ScreenScheduleProps {
   parking: ParkingSpace;
-  hours: number;
-  onIncrementHours: () => void;
-  onDecrementHours: () => void;
-  timeRange: {
+  hours?: number;
+  onIncrementHours?: () => void;
+  onDecrementHours?: () => void;
+  timeRange?: {
     date: string;
     startTime: string;
     endTime: string;
     formattedRange: string;
   };
-  financials: {
+  financials?: {
     hourlyRate: number;
     subtotal: number;
     commissionFee: number;
     totalAmount: number;
     estimatedSaving: number;
   };
+  selectedDayId?: 'today' | 'tomorrow' | 'day3';
+  onSelectDayId?: (dayId: 'today' | 'tomorrow' | 'day3') => void;
+  onUpdateBooking?: (details: {
+    hours: number;
+    scheduleText: string;
+    totalAmount: string;
+    dayId?: 'today' | 'tomorrow' | 'day3';
+  }) => void;
   onBack: () => void;
   onProceedToPayment: () => void;
   isDarkMode?: boolean;
@@ -41,15 +82,73 @@ export interface ScreenScheduleProps {
 
 export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
   parking,
-  hours,
+  hours: propHours = 2,
   onIncrementHours,
   onDecrementHours,
-  timeRange,
+  timeRange: propTimeRange,
   financials,
+  selectedDayId: propSelectedDayId,
+  onSelectDayId,
+  onUpdateBooking,
   onBack,
   onProceedToPayment,
   isDarkMode = false,
 }) => {
+  const [internalDayId, setInternalDayId] = useState<'today' | 'tomorrow' | 'day3'>('today');
+  const [internalHours, setInternalHours] = useState(propHours || 2);
+
+  const selectedDayId = propSelectedDayId ?? internalDayId;
+  const hours = propHours ?? internalHours;
+
+  // Si es "Hoy", inicia en la próxima hora; si es otro día, inicia por defecto a las 9:00 AM
+  const startHour = useMemo(() => {
+    return selectedDayId === 'today' ? getNextWholeHour() : 9;
+  }, [selectedDayId]);
+
+  const endHour = startHour + hours;
+
+  const formattedTimeRange = `${formatHour12(startHour)} a ${formatHour12(endHour)}`;
+
+  const activeDayLabel = useMemo(() => {
+    const days = getUpcomingDays();
+    return days.find((d) => d.id === selectedDayId)?.label || 'Hoy';
+  }, [selectedDayId]);
+
+  const handleSelectDay = (dayId: 'today' | 'tomorrow' | 'day3') => {
+    setInternalDayId(dayId);
+    onSelectDayId?.(dayId);
+  };
+
+  const handleDecrement = () => {
+    if (onDecrementHours) {
+      onDecrementHours();
+    } else {
+      setInternalHours((prev) => Math.max(1, prev - 1));
+    }
+  };
+
+  const handleIncrement = () => {
+    if (onIncrementHours) {
+      onIncrementHours();
+    } else {
+      setInternalHours((prev) => Math.min(12, prev + 1));
+    }
+  };
+
+  const handleContinue = () => {
+    const calculatedTotal = (hours * (parking?.hourlyRate || 1.5) * 1.15).toFixed(2);
+    const scheduleSummary = `${activeDayLabel} · ${formattedTimeRange} (${hours} ${hours === 1 ? 'Hora' : 'Horas'})`;
+
+    if (onUpdateBooking) {
+      onUpdateBooking({
+        hours,
+        scheduleText: scheduleSummary,
+        totalAmount: calculatedTotal,
+        dayId: selectedDayId,
+      });
+    }
+    onProceedToPayment();
+  };
   return (
     <div className={`flex flex-col min-h-full relative transition-colors duration-200 ${
       isDarkMode ? 'bg-slate-900 text-white' : 'bg-background text-slate-900'
@@ -110,21 +209,22 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
             Fecha de Reserva
           </label>
           <div className="grid grid-cols-3 gap-2">
-            {['Hoy', 'Mañana', 'Sábado'].map((dateOption, idx) => {
-              const isSelected = idx === 0;
+            {getUpcomingDays().map((day) => {
+              const isActive = selectedDayId === day.id;
               return (
                 <button
-                  key={dateOption}
+                  key={day.id}
                   type="button"
-                  className={`py-2 px-3 rounded-xl text-xs font-semibold transition-all duration-150 active:scale-95 cursor-pointer ${
-                    isSelected
-                      ? 'bg-primary text-white shadow-xs ring-1 ring-primary'
+                  onClick={() => handleSelectDay(day.id as any)}
+                  className={`py-2.5 rounded-2xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
+                    isActive
+                      ? 'bg-[#001F5D] text-white shadow-sm ring-1 ring-[#001F5D]'
                       : isDarkMode
-                      ? 'bg-slate-700/60 border border-slate-600 text-slate-300 hover:bg-slate-700'
-                      : 'bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100'
+                      ? 'bg-slate-800 border border-slate-700 text-slate-300 hover:bg-slate-700'
+                      : 'bg-slate-100 text-[#59667B] hover:bg-slate-200'
                   }`}
                 >
-                  {dateOption}
+                  {day.label}
                 </button>
               );
             })}
@@ -155,7 +255,7 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
           }`}>
             {/* Botón Decrementar (-) */}
             <button
-              onClick={onDecrementHours}
+              onClick={handleDecrement}
               disabled={hours <= 1}
               type="button"
               className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-base transition-colors ${
@@ -172,14 +272,14 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
               <span className="text-2xl font-black text-primary dark:text-white">
                 {hours} {hours === 1 ? 'hora' : 'horas'}
               </span>
-              <p className="text-[11px] font-semibold text-secondary dark:text-[#7C9FE7] mt-0.5">
-                {timeRange.formattedRange}
+              <p className="text-xs font-semibold text-[#59667B] dark:text-[#7C9FE7] mt-1">
+                {formattedTimeRange}
               </p>
             </div>
 
             {/* Botón Incrementar (+) */}
             <button
-              onClick={onIncrementHours}
+              onClick={handleIncrement}
               disabled={hours >= 12}
               type="button"
               className="w-10 h-10 rounded-xl bg-[#001F5D] text-white hover:bg-[#001744] flex items-center justify-center font-bold text-base shadow-xs active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
@@ -213,10 +313,10 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
           <div className="flex justify-between text-xs text-slate-700 dark:text-slate-300">
             <span>
               Tiempo reservado ({hours} {hours === 1 ? 'hr' : 'hrs'} x $
-              {financials.hourlyRate.toFixed(2)})
+              {(financials?.hourlyRate || parking.hourlyRate).toFixed(2)})
             </span>
             <span className="font-semibold">
-              ${financials.subtotal.toFixed(2)}
+              ${(financials?.subtotal ?? (hours * (parking?.hourlyRate || 1.5))).toFixed(2)}
             </span>
           </div>
 
@@ -226,7 +326,7 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
               <Info className="w-3 h-3 text-secondary" />
             </span>
             <span className="font-semibold text-secondary dark:text-[#7C9FE7]">
-              ${financials.commissionFee.toFixed(2)}
+              ${(financials?.commissionFee ?? ((hours * (parking?.hourlyRate || 1.5)) * 0.15)).toFixed(2)}
             </span>
           </div>
 
@@ -240,7 +340,7 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
               </p>
             </div>
             <span className="text-xl font-black text-primary dark:text-[#ECD700]">
-              ${financials.totalAmount.toFixed(2)}
+              ${(financials?.totalAmount ?? ((hours * (parking?.hourlyRate || 1.5)) * 1.15)).toFixed(2)}
             </span>
           </div>
         </div>
@@ -252,7 +352,7 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
           </div>
           <div>
             <h4 className="text-xs font-black text-[#001F5D] dark:text-[#ECD700]">
-              Ahorras aprox. ${financials.estimatedSaving.toFixed(2)}
+              Ahorras aprox. ${(financials?.estimatedSaving ?? 4.0).toFixed(2)}
             </h4>
             <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-0.5 leading-snug">
               Comparado con parqueos tradicionales o cuidadores de calle (ahorras más de $4.00).
@@ -272,13 +372,13 @@ export const ScreenSchedule: React.FC<ScreenScheduleProps> = ({
             Total a pagar
           </span>
           <p className="text-2xl font-black text-[#001F5D] dark:text-white">
-            ${financials.totalAmount.toFixed(2)}
+            ${(financials?.totalAmount ?? ((hours * (parking?.hourlyRate || 1.5)) * 1.15)).toFixed(2)}
           </p>
         </div>
 
         <button
           type="button"
-          onClick={onProceedToPayment}
+          onClick={handleContinue}
           className="h-12 px-6 rounded-2xl bg-[#ECD700] hover:bg-[#dfcb00] active:scale-[0.98] text-[#001F5D] text-sm font-bold tracking-tight shadow-sm transition-all duration-150 flex items-center justify-center cursor-pointer border border-[#ECD700]/60 shrink-0"
         >
           <span>Continuar al Pago</span>
